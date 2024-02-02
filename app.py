@@ -1060,8 +1060,8 @@ with tab1:
 		
 		file_path = 'logrpdterakhir.csv'
 		with open(file_path, mode='w', newline='') as file:
-		writer = csv.writer(file)
-		writer.writerows(data)
+			writer = csv.writer(file)
+			writer.writerows(data)
 
 with tab2:
 	st.header("Unduh RPD Realisasi untuk membantu Revisi Halaman III DIPA")
