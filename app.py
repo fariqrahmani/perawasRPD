@@ -4,7 +4,6 @@ import io
 import numpy as np
 from csv import writer
 import datetime
-import datetime
 import warnings
 
 from pandas.errors import SettingWithCopyWarning
@@ -37,7 +36,7 @@ with tab1:
 		info.rename(columns = {'Unnamed: 4':'kdsatker', 'Unnamed: 6':'nmsatker'}, inplace = True)
 		info['kdsatker'] = info['kdsatker'].str[-6:]
 		nama_satker = info['nmsatker'].iloc[0]  +' (' + info['kdsatker'].iloc[0] + ')'
-		kode_satker = info['kdsatker'].iloc[0]	
+		kode_satker = info['kdsatker'].iloc[0]
 
 		# Master Data RPD
 
@@ -1053,6 +1052,16 @@ with tab1:
 			file_name=excelname,
 			mime="application/vnd.ms-excel"
 		)
+
+		# Log Pengguna
+		timestamp = datetime.now()
+		stringTimestamp = timestamp.strftime("%Y-%m-%d %H:%M:%S")
+		setLog = [stringTimestamp, kode_satker, nama_satker]
+		
+		file_path = 'logrpdterakhir.csv'
+		with open(file_path, mode='w', newline='') as file:
+		writer = csv.writer(file)
+		writer.writerows(data)
 
 with tab2:
 	st.header("Unduh RPD Realisasi untuk membantu Revisi Halaman III DIPA")
