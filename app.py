@@ -34,7 +34,7 @@ with tab1:
 	uploaded_file = st.file_uploader('Upload File RPD DIPA Usulan di sini.', type='xlsx')
 	uploaded_file2 = st.file_uploader('Upload File RPD DIPA Petikan Terakhir di sini.', type='xlsx')
 	
-	if uploaded_file and uploaded_file2:
+	if uploaded_file is not None and uploaded_file2 is not None:
 		raw = pd.read_excel(uploaded_file2, index_col=None, header=6, skipfooter=5, engine='openpyxl')
 		info = pd.read_excel(uploaded_file2, index_col=None, nrows = 1, dtype=str, engine='openpyxl')
 		info.rename(columns = {'Unnamed: 4':'kdsatker', 'Unnamed: 6':'nmsatker'}, inplace = True)
