@@ -53,9 +53,7 @@ with tab1:
 				"private_key_id": st.secrets["private_key_id"],
 				"private_key": st.secrets["private_key"],
 				"client_email": st.secrets["client_email"],
-				"client_id": st.secrets["client_id"],
-				...
-		}
+				"client_id": st.secrets["client_id"]}
 
 		gc = gspread.service_account_from_dict(credentials)
 		spreadsheet = gc.open("Log User Perawas RPD").sheet1
