@@ -55,7 +55,7 @@ with tab1:
 				"client_email": st.secrets["client_email"],
 				"client_id": st.secrets["client_id"]}
 
-		gc = gspread.service_account_from_dict(credentials)
+		gc = gspread.service_account_from_dict(st.secrets["service_account"])
 		spreadsheet = gc.open("Log User Perawas RPD").sheet1
 		spreadsheet.append_row(setLog)
 
