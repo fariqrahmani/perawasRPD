@@ -47,14 +47,6 @@ with tab1:
 		stringTimestamp = timestamp_now.strftime("%Y-%m-%d %H:%M:%S")
 		setLog = [stringTimestamp, "Revisi KPA",kode_satker, nama_satker]
 		
-		credentials = {
-				"type": st.secrets["type"],
-				"project_id": st.secrets["project_id"],
-				"private_key_id": st.secrets["private_key_id"],
-				"private_key": st.secrets["private_key"],
-				"client_email": st.secrets["client_email"],
-				"client_id": st.secrets["client_id"]}
-
 		gc = gspread.service_account_from_dict(st.secrets["service_account"])
 		spreadsheet = gc.open("Log User Perawas RPD").sheet1
 		spreadsheet.append_row(setLog)
