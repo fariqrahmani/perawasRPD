@@ -3,12 +3,13 @@ import pandas as pd
 import io
 import numpy as np
 from csv import writer
-import csv
 import datetime
 from datetime import datetime
 import warnings
 import gspread
 import pytz
+from xlsxwriter.workbook import Workbook
+from typing import cast
 
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter("ignore")
@@ -39,7 +40,7 @@ with tab1:
 		info = pd.read_excel(uploaded_file2, index_col=None, nrows = 1, dtype=str, engine='openpyxl')
 		info.rename(columns = {'Unnamed: 4':'kdsatker', 'Unnamed: 6':'nmsatker'}, inplace = True)
 		info['kdsatker'] = info['kdsatker'].str[-6:]
-		nama_satker = info['nmsatker'].iloc[0]  +' (' + info['kdsatker'].iloc[0] + ')'
+		nama_satker = str(info['nmsatker'].iloc[0]) + ' (' + str(info['kdsatker'].iloc[0]) + ')'
 		kode_satker = info['kdsatker'].iloc[0]
 
 		# Mencatat log pengguna
@@ -106,7 +107,7 @@ with tab1:
 		urpisah = pd.concat([kdprog,idkro], axis=1, sort=False).sort_index()
 		urpisah.loc[:,'kdprog'] = urpisah.loc[:,'kdprog'].ffill()
 		urpisah=urpisah.dropna()
-		urpisah['ID']=urpisah['kdprog']+'.'+urpisah['kdkro']+'.000.000.00'
+		urpisah['ID']=urpisah['kdprog'].astype(str)+'.'+urpisah['kdkro'].astype(str)+'.000.000.00'
 		urpisah['Kode']=np.nan
 		urpisah['Uraian']=np.nan
 		urpisah = urpisah[['ID', 'Kode','Uraian']]
@@ -115,8 +116,8 @@ with tab1:
 		urkro = pd.concat([kdprog,idkro], axis=1, sort=False).sort_index()
 		urkro.loc[:,'kdprog'] = urkro.loc[:,'kdprog'].ffill()
 		urkro=urkro.dropna()
-		urkro['ID']=urkro['kdprog']+'.'+urkro['kdkro']+'.000.000.00'
-		urkro['Kode']=urkro['kdprog']+'.'+urkro['kdkro']
+		urkro['ID']=urkro['kdprog'].astype(str)+'.'+urkro['kdkro'].astype(str)+'.000.000.00'
+		urkro['Kode']=urkro['kdprog'].astype(str)+'.'+urkro['kdkro']
 		urkro = urkro[['ID', 'Kode','Uraian']]
 		urkro.reset_index(drop=True, inplace=True)
 
@@ -124,8 +125,8 @@ with tab1:
 		urro.loc[:,'kdprog'] = urro.loc[:,'kdprog'].ffill()
 		urro.loc[:,'kdgiat'] = urro.loc[:,'kdgiat'].ffill()
 		urro=urro.dropna()
-		urro['ID']=urro['kdprog']+'.'+urro['kdgiat']+'.'+urro['kdro']+'.000.00'
-		urro['Kode']=urro['kdgiat']+'.'+urro['kdro']
+		urro['ID']=urro['kdprog'].astype(str)+'.'+urro['kdgiat'].astype(str)+'.'+urro['kdro'].astype(str)+'.000.00'
+		urro['Kode']=urro['kdgiat'].astype(str)+'.'+urro['kdro']
 		urro = urro[['ID', 'Kode','Uraian']]
 		urro.reset_index(drop=True, inplace=True)
 
@@ -135,7 +136,7 @@ with tab1:
 		urkomp.loc[:,'kdkro'] = urkomp.loc[:,'kdkro'].ffill()
 		urkomp.loc[:,'kdro'] = urkomp.loc[:,'kdro'].ffill()
 		urkomp=urkomp.dropna()
-		urkomp['ID']=urkomp['kdprog']+'.'+urkomp['kdgiat']+'.'+urkomp['kdkro']+'.'+urkomp['kdro']+'.'+urkomp['kdkomp']+'.00'
+		urkomp['ID']=urkomp['kdprog'].astype(str)+'.'+urkomp['kdgiat'].astype(str)+'.'+urkomp['kdkro'].astype(str)+'.'+urkomp['kdro'].astype(str)+'.'+urkomp['kdkomp'].astype(str)+'.00'
 		urkomp['Kode']=urkomp['kdkomp']
 		urkomp = urkomp[['ID', 'Kode','Uraian']]
 		urkomp.reset_index(drop=True, inplace=True)
@@ -147,7 +148,7 @@ with tab1:
 		urskomp.loc[:,'kdro'] = urskomp.loc[:,'kdro'].ffill()
 		urskomp.loc[:,'kdkomp'] = urskomp.loc[:,'kdkomp'].ffill()
 		urskomp=urskomp.dropna()
-		urskomp['ID']=urskomp['kdprog']+'.'+urskomp['kdgiat']+'.'+urskomp['kdkro']+'.'+urskomp['kdro']+'.'+urskomp['kdkomp']+'.'+urskomp['kdskomp']+'.00'
+		urskomp['ID']=urskomp['kdprog'].astype(str)+'.'+urskomp['kdgiat'].astype(str)+'.'+urskomp['kdkro'].astype(str)+'.'+urskomp['kdro'].astype(str)+'.'+urskomp['kdkomp'].astype(str)+'.'+urskomp['kdskomp'].astype(str)+'.00'
 		urskomp['Kode']=urskomp['kdskomp']
 		urskomp = urskomp[['ID', 'Kode','Uraian']]
 		urskomp.reset_index(drop=True, inplace=True)
@@ -159,32 +160,32 @@ with tab1:
 		kompbel1.loc[:,'kdkomp'] = kompbel1.loc[:,'kdkomp'].ffill()
 		kompbel1.loc[:,'Uraian'] = kompbel1.loc[:,'Uraian'].ffill()
 		kompbel1=kompbel1.dropna()
-		kompbel1['ID']=kompbel1['kdkomp']+'.'+kompbel1['Kode']
+		kompbel1['ID']=kompbel1['kdkomp'].astype(str)+'.'+kompbel1['Kode']
 		kompbel2 = kompbel1[['ID', 'Uraian', 'Kode']]
 		kompbel2.rename(columns = {'Kode':'Belanja'}, inplace = True)
 
 		kompbel3 = pd.concat([kompbel2,kdro], axis=1, sort=False).sort_index()
 		kompbel3.loc[:,'kdro'] = kompbel3.loc[:,'kdro'].ffill()
 		kompbel3=kompbel3.dropna()
-		kompbel3['ID']=kompbel3['kdro']+'.'+kompbel3['ID']
+		kompbel3['ID']=kompbel3['kdro'].astype(str)+'.'+kompbel3['ID']
 		kompbel4 = kompbel3[['ID', 'Uraian', 'Belanja']]
 
 		kompbel5 = pd.concat([kompbel4,kdkro], axis=1, sort=False).sort_index()
 		kompbel5.loc[:,'kdkro'] = kompbel5.loc[:,'kdkro'].ffill()
 		kompbel5=kompbel5.dropna()
-		kompbel5['ID']=kompbel5['kdkro']+'.'+kompbel5['ID']
+		kompbel5['ID']=kompbel5['kdkro'].astype(str)+'.'+kompbel5['ID']
 		kompbel6 = kompbel5[['ID', 'Uraian', 'Belanja']]
 
 		kompbel7 = pd.concat([kompbel6,kdgiat], axis=1, sort=False).sort_index()
 		kompbel7.loc[:,'kdgiat'] = kompbel7.loc[:,'kdgiat'].ffill()
 		kompbel7=kompbel7.dropna()
-		kompbel7['ID']=kompbel7['kdgiat']+'.'+kompbel7['ID']
+		kompbel7['ID']=kompbel7['kdgiat'].astype(str)+'.'+kompbel7['ID']
 		kompbel8 = kompbel7[['ID', 'Uraian', 'Belanja']]
 
 		kompbel9 = pd.concat([kompbel8,kdprog], axis=1, sort=False).sort_index()
 		kompbel9.loc[:,'kdprog'] = kompbel9.loc[:,'kdprog'].ffill()
 		kompbel9=kompbel9.dropna()
-		kompbel9['ID']=kompbel9['kdprog']+'.'+kompbel9['ID']
+		kompbel9['ID']=kompbel9['kdprog'].astype(str)+'.'+kompbel9['ID']
 		kompbel10 = kompbel9[['ID', 'Uraian', 'Belanja']]
 
 		# Proses Bentuk Nilai Subkomponen & Jenis Belanja
@@ -194,38 +195,38 @@ with tab1:
 		kompbels1.loc[:,'kdskomp'] = kompbels1.loc[:,'kdskomp'].ffill()
 		kompbels1.loc[:,'Uraian'] = kompbels1.loc[:,'Uraian'].ffill()
 		kompbels1=kompbels1.dropna()
-		kompbels1['ID']=kompbels1['kdskomp']+'.'+kompbels1['Kode']
+		kompbels1['ID']=kompbels1['kdskomp'].astype(str)+'.'+kompbels1['Kode']
 		kompbels2 = kompbels1[['ID', 'Uraian', 'Kode']]
 		kompbels2.rename(columns = {'Kode':'Belanja'}, inplace = True)
 
 		kompbels2A = pd.concat([kompbels2,kdkomp], axis=1, sort=False).sort_index()
 		kompbels2A.loc[:,'kdkomp'] = kompbels2A.loc[:,'kdkomp'].ffill()
 		kompbels2A=kompbels2A.dropna()
-		kompbels2A['ID']=kompbels2A['kdkomp']+'.'+kompbels2A['ID']
+		kompbels2A['ID']=kompbels2A['kdkomp'].astype(str)+'.'+kompbels2A['ID']
 		kompbels2B = kompbels2A[['ID', 'Uraian', 'Belanja']]
 
 		kompbels3 = pd.concat([kompbels2B,kdro], axis=1, sort=False).sort_index()
 		kompbels3.loc[:,'kdro'] = kompbels3.loc[:,'kdro'].ffill()
 		kompbels3=kompbels3.dropna()
-		kompbels3['ID']=kompbels3['kdro']+'.'+kompbels3['ID']
+		kompbels3['ID']=kompbels3['kdro'].astype(str)+'.'+kompbels3['ID']
 		kompbels4 = kompbels3[['ID', 'Uraian', 'Belanja']]
 
 		kompbels5 = pd.concat([kompbels4,kdkro], axis=1, sort=False).sort_index()
 		kompbels5.loc[:,'kdkro'] = kompbels5.loc[:,'kdkro'].ffill()
 		kompbels5=kompbels5.dropna()
-		kompbels5['ID']=kompbels5['kdkro']+'.'+kompbels5['ID']
+		kompbels5['ID']=kompbels5['kdkro'].astype(str)+'.'+kompbels5['ID']
 		kompbels6 = kompbels5[['ID', 'Uraian', 'Belanja']]
 
 		kompbels7 = pd.concat([kompbels6,kdgiat], axis=1, sort=False).sort_index()
 		kompbels7.loc[:,'kdgiat'] = kompbels7.loc[:,'kdgiat'].ffill()
 		kompbels7=kompbels7.dropna()
-		kompbels7['ID']=kompbels7['kdgiat']+'.'+kompbels7['ID']
+		kompbels7['ID']=kompbels7['kdgiat'].astype(str)+'.'+kompbels7['ID']
 		kompbels8 = kompbels7[['ID', 'Uraian', 'Belanja']]
 
 		kompbels9 = pd.concat([kompbels8,kdprog], axis=1, sort=False).sort_index()
 		kompbels9.loc[:,'kdprog'] = kompbels9.loc[:,'kdprog'].ffill()
 		kompbels9=kompbels9.dropna()
-		kompbels9['ID']=kompbels9['kdprog']+'.'+kompbels9['ID']
+		kompbels9['ID']=kompbels9['kdprog'].astype(str)+'.'+kompbels9['ID']
 		kompbels10 = kompbels9[['ID', 'Uraian', 'Belanja']]
 
 		# Proses Bentuk Nilai Akun & Jenis Belanja
@@ -235,44 +236,44 @@ with tab1:
 		kompbelss1.loc[:,'kdakun'] = kompbelss1.loc[:,'kdakun'].ffill()
 		kompbelss1.loc[:,'Uraian'] = kompbelss1.loc[:,'Uraian'].ffill()
 		kompbelss1=kompbelss1.dropna()
-		kompbelss1['ID']=kompbelss1['kdakun']+'.'+kompbelss1['Kode']
+		kompbelss1['ID']=kompbelss1['kdakun'].astype(str)+'.'+kompbelss1['Kode']
 		kompbelss2 = kompbelss1[['ID', 'Uraian', 'Kode']]
 		kompbelss2.rename(columns = {'Kode':'Belanja'}, inplace = True)
 
 		kompbelss2A = pd.concat([kompbelss2,kdskomp], axis=1, sort=False).sort_index()
 		kompbelss2A.loc[:,'kdskomp'] = kompbelss2A.loc[:,'kdskomp'].ffill()
 		kompbelss2A=kompbelss2A.dropna()
-		kompbelss2A['ID']=kompbelss2A['kdskomp']+'.'+kompbelss2A['ID']
+		kompbelss2A['ID']=kompbelss2A['kdskomp'].astype(str)+'.'+kompbelss2A['ID']
 		kompbelss2B = kompbelss2A[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss2C = pd.concat([kompbelss2B,kdkomp], axis=1, sort=False).sort_index()
 		kompbelss2C.loc[:,'kdkomp'] = kompbelss2C.loc[:,'kdkomp'].ffill()
 		kompbelss2C=kompbelss2C.dropna()
-		kompbelss2C['ID']=kompbelss2C['kdkomp']+'.'+kompbelss2C['ID']
+		kompbelss2C['ID']=kompbelss2C['kdkomp'].astype(str)+'.'+kompbelss2C['ID']
 		kompbelss2D = kompbelss2C[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss3 = pd.concat([kompbelss2D,kdro], axis=1, sort=False).sort_index()
 		kompbelss3.loc[:,'kdro'] = kompbelss3.loc[:,'kdro'].ffill()
 		kompbelss3=kompbelss3.dropna()
-		kompbelss3['ID']=kompbelss3['kdro']+'.'+kompbelss3['ID']
+		kompbelss3['ID']=kompbelss3['kdro'].astype(str)+'.'+kompbelss3['ID']
 		kompbelss4 = kompbelss3[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss5 = pd.concat([kompbelss4,kdkro], axis=1, sort=False).sort_index()
 		kompbelss5.loc[:,'kdkro'] = kompbelss5.loc[:,'kdkro'].ffill()
 		kompbelss5=kompbelss5.dropna()
-		kompbelss5['ID']=kompbelss5['kdkro']+'.'+kompbelss5['ID']
+		kompbelss5['ID']=kompbelss5['kdkro'].astype(str)+'.'+kompbelss5['ID']
 		kompbelss6 = kompbelss5[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss7 = pd.concat([kompbelss6,kdgiat], axis=1, sort=False).sort_index()
 		kompbelss7.loc[:,'kdgiat'] = kompbelss7.loc[:,'kdgiat'].ffill()
 		kompbelss7=kompbelss7.dropna()
-		kompbelss7['ID']=kompbelss7['kdgiat']+'.'+kompbelss7['ID']
+		kompbelss7['ID']=kompbelss7['kdgiat'].astype(str)+'.'+kompbelss7['ID']
 		kompbelss8 = kompbelss7[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss9 = pd.concat([kompbelss8,kdprog], axis=1, sort=False).sort_index()
 		kompbelss9.loc[:,'kdprog'] = kompbelss9.loc[:,'kdprog'].ffill()
 		kompbelss9=kompbelss9.dropna()
-		kompbelss9['ID']=kompbelss9['kdprog']+'.'+kompbelss9['ID']
+		kompbelss9['ID']=kompbelss9['kdprog'].astype(str)+'.'+kompbelss9['ID']
 		kompbelss10 = kompbelss9[['ID', 'Uraian', 'Belanja']]
 
 		# Gabung Jan-Des dengan Pagu
@@ -333,7 +334,7 @@ with tab1:
 		satker['Indeks'] = satker['Indeks']+19 
 		satker['Indeks'] = satker['Indeks'].astype(str)
 
-		satker['Sisa RPD'].loc[~satker['Pagu'].isnull()] = '=G'+satker['Indeks']+'-SUM(I'+satker['Indeks']+':T'+satker['Indeks']+')'
+		satker['Sisa RPD'].loc[~satker['Pagu'].isnull()] = '=G'+satker['Indeks'].astype(str)+'-SUM(I'+satker['Indeks'].astype(str)+':T'+satker['Indeks'].astype(str)+')'
 
 		satker = satker.reindex(['ID','Satker','Kode','Uraian','Belanja','Keterangan','Pagu','Sisa RPD', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], axis='columns')
 
@@ -351,7 +352,7 @@ with tab1:
 		satker2['Indeks'] = satker2['Indeks']+19 
 		satker2['Indeks'] = satker2['Indeks'].astype(str)
 
-		satker2['Sisa RPD'].loc[~satker2['Pagu'].isnull()] = '=G'+satker2['Indeks']+'-SUM(I'+satker2['Indeks']+':T'+satker2['Indeks']+')'
+		satker2['Sisa RPD'].loc[~satker2['Pagu'].isnull()] = '=G'+satker2['Indeks'].astype(str)+'-SUM(I'+satker2['Indeks'].astype(str)+':T'+satker2['Indeks'].astype(str)+')'
 
 		satker2 = satker2.reindex(['ID','Satker','Kode','Uraian','Belanja','Keterangan','Pagu','Sisa RPD', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], axis='columns')
 
@@ -369,7 +370,7 @@ with tab1:
 		satker3['Indeks'] = satker3['Indeks']+19 
 		satker3['Indeks'] = satker3['Indeks'].astype(str)
 
-		satker3['Sisa RPD'].loc[~satker3['Pagu'].isnull()] = '=G'+satker3['Indeks']+'-SUM(I'+satker3['Indeks']+':T'+satker3['Indeks']+')'
+		satker3['Sisa RPD'].loc[~satker3['Pagu'].isnull()] = '=G'+satker3['Indeks'].astype(str)+'-SUM(I'+satker3['Indeks'].astype(str)+':T'+satker3['Indeks'].astype(str)+')'
 
 		satker3 = satker3.reindex(['ID','Satker','Kode','Uraian','Belanja','Keterangan','Pagu','Sisa RPD', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], axis='columns')
 
@@ -429,14 +430,14 @@ with tab1:
 		idkompZZ.loc[:,'kdro'] = idkompZZ.loc[:,'kdro'].ffill()
 		idkompZZ=idkompZZ.dropna()
 
-		idkompZZ['ID']=idkompZZ['kdprog']+"."+idkompZZ['kdgiat']+"."+idkompZZ['kdkro']+"."+idkompZZ['kdro']+"."+idkompZZ['kdkomp']
+		idkompZZ['ID']=idkompZZ['kdprog'].astype(str)+"."+idkompZZ['kdgiat'].astype(str)+"."+idkompZZ['kdkro'].astype(str)+"."+idkompZZ['kdro'].astype(str)+"."+idkompZZ['kdkomp']
 		kdkompZZ = idkompZZ['ID']
 
 		sumkompZ = pd.concat([kdkompZZ,idakunZ], axis=1, sort=False).sort_index()
 		sumkompZ.loc[:,'ID'] = sumkompZ.loc[:,'ID'].ffill()
 		sumkompZ=sumkompZ.dropna()
 
-		sumkompZ['ID']=sumkompZ['ID']+"."+sumkompZ['kdakun'].str[:2]
+		sumkompZ['ID']=sumkompZ['ID'].astype(str)+"."+sumkompZ['kdakun'].str[:2]
 		sumkompZ=sumkompZ.drop(['kdakun'], axis=1)
 
 		sumkompZ = sumkompZ.groupby(['ID']).sum()[['pagu']]
@@ -458,14 +459,14 @@ with tab1:
 		idskompZZ.loc[:,'kdkomp'] = idskompZZ.loc[:,'kdkomp'].ffill()
 		idskompZZ=idskompZZ.dropna()
 
-		idskompZZ['ID']=idskompZZ['kdprog']+"."+idskompZZ['kdgiat']+"."+idskompZZ['kdkro']+"."+idskompZZ['kdro']+"."+idskompZZ['kdkomp']+"."+idskompZZ['kdskomp']
+		idskompZZ['ID']=idskompZZ['kdprog'].astype(str)+"."+idskompZZ['kdgiat'].astype(str)+"."+idskompZZ['kdkro'].astype(str)+"."+idskompZZ['kdro'].astype(str)+"."+idskompZZ['kdkomp'].astype(str)+"."+idskompZZ['kdskomp']
 		kdskompZZ = idskompZZ['ID']
 
 		sumskompZ = pd.concat([kdskompZZ,idakunZ], axis=1, sort=False).sort_index()
 		sumskompZ.loc[:,'ID'] = sumskompZ.loc[:,'ID'].ffill()
 		sumskompZ=sumskompZ.dropna()
 
-		sumskompZ['ID']=sumskompZ['ID']+"."+sumskompZ['kdakun'].str[:2]
+		sumskompZ['ID']=sumskompZ['ID'].astype(str)+"."+sumskompZ['kdakun'].str[:2]
 		sumskompZ=sumskompZ.drop(['kdakun'], axis=1)
 
 		sumskompZ = sumskompZ.groupby(['ID']).sum()[['pagu']]
@@ -488,14 +489,14 @@ with tab1:
 		idakunZZ.loc[:,'kdskomp'] = idakunZZ.loc[:,'kdskomp'].ffill()
 		idakunZZ=idakunZZ.dropna()
 
-		idakunZZ['ID']=idakunZZ['kdprog']+"."+idakunZZ['kdgiat']+"."+idakunZZ['kdkro']+"."+idakunZZ['kdro']+"."+idakunZZ['kdkomp']+"."+idakunZZ['kdskomp']+"."+idakunZZ['kdakun']
+		idakunZZ['ID']=idakunZZ['kdprog'].astype(str)+"."+idakunZZ['kdgiat'].astype(str)+"."+idakunZZ['kdkro'].astype(str)+"."+idakunZZ['kdro'].astype(str)+"."+idakunZZ['kdkomp'].astype(str)+"."+idakunZZ['kdskomp'].astype(str)+"."+idakunZZ['kdakun']
 		kdakunZZ = idakunZZ['ID']
 
 		sumakunZ = pd.concat([kdakunZZ,idakunZ], axis=1, sort=False).sort_index()
 		sumakunZ.loc[:,'ID'] = sumakunZ.loc[:,'ID'].ffill()
 		sumakunZ=sumakunZ.dropna()
 
-		sumakunZ['ID']=sumakunZ['ID']+"."+sumakunZ['kdakun'].str[:2]
+		sumakunZ['ID']=sumakunZ['ID'].astype(str)+"."+sumakunZ['kdakun'].str[:2]
 		sumakunZ=sumakunZ.drop(['kdakun'], axis=1)
 
 		sumakunZ = sumakunZ.groupby(['ID']).sum()[['pagu']]
@@ -512,7 +513,7 @@ with tab1:
 		writer = pd.ExcelWriter(buffer, engine='xlsxwriter')
 
 		# Get the xlsxwriter workbook and worksheet objects.
-		workbook  = writer.book
+		workbook = cast(Workbook, writer.book)
 
 		# Format sel.
 		header_format = workbook.add_format({
@@ -1075,7 +1076,7 @@ with tab2:
 		info = pd.read_excel(uploaded_fileZ, index_col=None, nrows = 1, dtype=str, engine='openpyxl')
 		info.rename(columns = {'Unnamed: 4':'kdsatker', 'Unnamed: 6':'nmsatker'}, inplace = True)
 		info['kdsatker'] = info['kdsatker'].str[-6:]
-		nama_satker = info['nmsatker'].iloc[0]  +' (' + info['kdsatker'].iloc[0] + ')'
+		nama_satker = str(info['nmsatker'].iloc[0]) + ' (' + str(info['kdsatker'].iloc[0]) + ')'
 		kode_satker = info['kdsatker'].iloc[0]	
 
 		# Mencatat log pengguna
@@ -1143,7 +1144,7 @@ with tab2:
 		urpisah = pd.concat([kdprog,idkro], axis=1, sort=False).sort_index()
 		urpisah.loc[:,'kdprog'] = urpisah.loc[:,'kdprog'].ffill()
 		urpisah=urpisah.dropna()
-		urpisah['ID']=urpisah['kdprog']+'.'+urpisah['kdkro']+'.000.000.00'
+		urpisah['ID']=urpisah['kdprog'].astype(str)+'.'+urpisah['kdkro'].astype(str)+'.000.000.00'
 		urpisah['Kode']=np.nan
 		urpisah['Uraian']=np.nan
 		urpisah = urpisah[['ID', 'Kode','Uraian']]
@@ -1152,8 +1153,8 @@ with tab2:
 		urkro = pd.concat([kdprog,idkro], axis=1, sort=False).sort_index()
 		urkro.loc[:,'kdprog'] = urkro.loc[:,'kdprog'].ffill()
 		urkro=urkro.dropna()
-		urkro['ID']=urkro['kdprog']+'.'+urkro['kdkro']+'.000.000.00'
-		urkro['Kode']=urkro['kdprog']+'.'+urkro['kdkro']
+		urkro['ID']=urkro['kdprog'].astype(str)+'.'+urkro['kdkro'].astype(str)+'.000.000.00'
+		urkro['Kode']=urkro['kdprog'].astype(str)+'.'+urkro['kdkro']
 		urkro = urkro[['ID', 'Kode','Uraian']]
 		urkro.reset_index(drop=True, inplace=True)
 
@@ -1161,8 +1162,8 @@ with tab2:
 		urro.loc[:,'kdprog'] = urro.loc[:,'kdprog'].ffill()
 		urro.loc[:,'kdgiat'] = urro.loc[:,'kdgiat'].ffill()
 		urro=urro.dropna()
-		urro['ID']=urro['kdprog']+'.'+urro['kdgiat']+'.'+urro['kdro']+'.000.00'
-		urro['Kode']=urro['kdgiat']+'.'+urro['kdro']
+		urro['ID']=urro['kdprog'].astype(str)+'.'+urro['kdgiat'].astype(str)+'.'+urro['kdro'].astype(str)+'.000.00'
+		urro['Kode']=urro['kdgiat'].astype(str)+'.'+urro['kdro']
 		urro = urro[['ID', 'Kode','Uraian']]
 		urro.reset_index(drop=True, inplace=True)
 
@@ -1172,7 +1173,7 @@ with tab2:
 		urkomp.loc[:,'kdkro'] = urkomp.loc[:,'kdkro'].ffill()
 		urkomp.loc[:,'kdro'] = urkomp.loc[:,'kdro'].ffill()
 		urkomp=urkomp.dropna()
-		urkomp['ID']=urkomp['kdprog']+'.'+urkomp['kdgiat']+'.'+urkomp['kdkro']+'.'+urkomp['kdro']+'.'+urkomp['kdkomp']+'.00'
+		urkomp['ID']=urkomp['kdprog'].astype(str)+'.'+urkomp['kdgiat'].astype(str)+'.'+urkomp['kdkro'].astype(str)+'.'+urkomp['kdro'].astype(str)+'.'+urkomp['kdkomp'].astype(str)+'.00'
 		urkomp['Kode']=urkomp['kdkomp']
 		urkomp = urkomp[['ID', 'Kode','Uraian']]
 		urkomp.reset_index(drop=True, inplace=True)
@@ -1184,7 +1185,7 @@ with tab2:
 		urskomp.loc[:,'kdro'] = urskomp.loc[:,'kdro'].ffill()
 		urskomp.loc[:,'kdkomp'] = urskomp.loc[:,'kdkomp'].ffill()
 		urskomp=urskomp.dropna()
-		urskomp['ID']=urskomp['kdprog']+'.'+urskomp['kdgiat']+'.'+urskomp['kdkro']+'.'+urskomp['kdro']+'.'+urskomp['kdkomp']+'.'+urskomp['kdskomp']+'.00'
+		urskomp['ID']=urskomp['kdprog'].astype(str)+'.'+urskomp['kdgiat'].astype(str)+'.'+urskomp['kdkro'].astype(str)+'.'+urskomp['kdro'].astype(str)+'.'+urskomp['kdkomp'].astype(str)+'.'+urskomp['kdskomp'].astype(str)+'.00'
 		urskomp['Kode']=urskomp['kdskomp']
 		urskomp = urskomp[['ID', 'Kode','Uraian']]
 		urskomp.reset_index(drop=True, inplace=True)
@@ -1196,32 +1197,32 @@ with tab2:
 		kompbel1.loc[:,'kdkomp'] = kompbel1.loc[:,'kdkomp'].ffill()
 		kompbel1.loc[:,'Uraian'] = kompbel1.loc[:,'Uraian'].ffill()
 		kompbel1=kompbel1.dropna()
-		kompbel1['ID']=kompbel1['kdkomp']+'.'+kompbel1['Kode']
+		kompbel1['ID']=kompbel1['kdkomp'].astype(str)+'.'+kompbel1['Kode']
 		kompbel2 = kompbel1[['ID', 'Uraian', 'Kode']]
 		kompbel2.rename(columns = {'Kode':'Belanja'}, inplace = True)
 
 		kompbel3 = pd.concat([kompbel2,kdro], axis=1, sort=False).sort_index()
 		kompbel3.loc[:,'kdro'] = kompbel3.loc[:,'kdro'].ffill()
 		kompbel3=kompbel3.dropna()
-		kompbel3['ID']=kompbel3['kdro']+'.'+kompbel3['ID']
+		kompbel3['ID']=kompbel3['kdro'].astype(str)+'.'+kompbel3['ID']
 		kompbel4 = kompbel3[['ID', 'Uraian', 'Belanja']]
 
 		kompbel5 = pd.concat([kompbel4,kdkro], axis=1, sort=False).sort_index()
 		kompbel5.loc[:,'kdkro'] = kompbel5.loc[:,'kdkro'].ffill()
 		kompbel5=kompbel5.dropna()
-		kompbel5['ID']=kompbel5['kdkro']+'.'+kompbel5['ID']
+		kompbel5['ID']=kompbel5['kdkro'].astype(str)+'.'+kompbel5['ID']
 		kompbel6 = kompbel5[['ID', 'Uraian', 'Belanja']]
 
 		kompbel7 = pd.concat([kompbel6,kdgiat], axis=1, sort=False).sort_index()
 		kompbel7.loc[:,'kdgiat'] = kompbel7.loc[:,'kdgiat'].ffill()
 		kompbel7=kompbel7.dropna()
-		kompbel7['ID']=kompbel7['kdgiat']+'.'+kompbel7['ID']
+		kompbel7['ID']=kompbel7['kdgiat'].astype(str)+'.'+kompbel7['ID']
 		kompbel8 = kompbel7[['ID', 'Uraian', 'Belanja']]
 
 		kompbel9 = pd.concat([kompbel8,kdprog], axis=1, sort=False).sort_index()
 		kompbel9.loc[:,'kdprog'] = kompbel9.loc[:,'kdprog'].ffill()
 		kompbel9=kompbel9.dropna()
-		kompbel9['ID']=kompbel9['kdprog']+'.'+kompbel9['ID']
+		kompbel9['ID']=kompbel9['kdprog'].astype(str)+'.'+kompbel9['ID']
 		kompbel10 = kompbel9[['ID', 'Uraian', 'Belanja']]
 
 		# Proses Bentuk Nilai Subkomponen & Jenis Belanja
@@ -1231,38 +1232,38 @@ with tab2:
 		kompbels1.loc[:,'kdskomp'] = kompbels1.loc[:,'kdskomp'].ffill()
 		kompbels1.loc[:,'Uraian'] = kompbels1.loc[:,'Uraian'].ffill()
 		kompbels1=kompbels1.dropna()
-		kompbels1['ID']=kompbels1['kdskomp']+'.'+kompbels1['Kode']
+		kompbels1['ID']=kompbels1['kdskomp'].astype(str)+'.'+kompbels1['Kode']
 		kompbels2 = kompbels1[['ID', 'Uraian', 'Kode']]
 		kompbels2.rename(columns = {'Kode':'Belanja'}, inplace = True)
 
 		kompbels2A = pd.concat([kompbels2,kdkomp], axis=1, sort=False).sort_index()
 		kompbels2A.loc[:,'kdkomp'] = kompbels2A.loc[:,'kdkomp'].ffill()
 		kompbels2A=kompbels2A.dropna()
-		kompbels2A['ID']=kompbels2A['kdkomp']+'.'+kompbels2A['ID']
+		kompbels2A['ID']=kompbels2A['kdkomp'].astype(str)+'.'+kompbels2A['ID']
 		kompbels2B = kompbels2A[['ID', 'Uraian', 'Belanja']]
 
 		kompbels3 = pd.concat([kompbels2B,kdro], axis=1, sort=False).sort_index()
 		kompbels3.loc[:,'kdro'] = kompbels3.loc[:,'kdro'].ffill()
 		kompbels3=kompbels3.dropna()
-		kompbels3['ID']=kompbels3['kdro']+'.'+kompbels3['ID']
+		kompbels3['ID']=kompbels3['kdro'].astype(str)+'.'+kompbels3['ID']
 		kompbels4 = kompbels3[['ID', 'Uraian', 'Belanja']]
 
 		kompbels5 = pd.concat([kompbels4,kdkro], axis=1, sort=False).sort_index()
 		kompbels5.loc[:,'kdkro'] = kompbels5.loc[:,'kdkro'].ffill()
 		kompbels5=kompbels5.dropna()
-		kompbels5['ID']=kompbels5['kdkro']+'.'+kompbels5['ID']
+		kompbels5['ID']=kompbels5['kdkro'].astype(str)+'.'+kompbels5['ID']
 		kompbels6 = kompbels5[['ID', 'Uraian', 'Belanja']]
 
 		kompbels7 = pd.concat([kompbels6,kdgiat], axis=1, sort=False).sort_index()
 		kompbels7.loc[:,'kdgiat'] = kompbels7.loc[:,'kdgiat'].ffill()
 		kompbels7=kompbels7.dropna()
-		kompbels7['ID']=kompbels7['kdgiat']+'.'+kompbels7['ID']
+		kompbels7['ID']=kompbels7['kdgiat'].astype(str)+'.'+kompbels7['ID']
 		kompbels8 = kompbels7[['ID', 'Uraian', 'Belanja']]
 
 		kompbels9 = pd.concat([kompbels8,kdprog], axis=1, sort=False).sort_index()
 		kompbels9.loc[:,'kdprog'] = kompbels9.loc[:,'kdprog'].ffill()
 		kompbels9=kompbels9.dropna()
-		kompbels9['ID']=kompbels9['kdprog']+'.'+kompbels9['ID']
+		kompbels9['ID']=kompbels9['kdprog'].astype(str)+'.'+kompbels9['ID']
 		kompbels10 = kompbels9[['ID', 'Uraian', 'Belanja']]
 
 		# Proses Bentuk Nilai Akun & Jenis Belanja
@@ -1272,44 +1273,44 @@ with tab2:
 		kompbelss1.loc[:,'kdakun'] = kompbelss1.loc[:,'kdakun'].ffill()
 		kompbelss1.loc[:,'Uraian'] = kompbelss1.loc[:,'Uraian'].ffill()
 		kompbelss1=kompbelss1.dropna()
-		kompbelss1['ID']=kompbelss1['kdakun']+'.'+kompbelss1['Kode']
+		kompbelss1['ID']=kompbelss1['kdakun'].astype(str)+'.'+kompbelss1['Kode']
 		kompbelss2 = kompbelss1[['ID', 'Uraian', 'Kode']]
 		kompbelss2.rename(columns = {'Kode':'Belanja'}, inplace = True)
 
 		kompbelss2A = pd.concat([kompbelss2,kdskomp], axis=1, sort=False).sort_index()
 		kompbelss2A.loc[:,'kdskomp'] = kompbelss2A.loc[:,'kdskomp'].ffill()
 		kompbelss2A=kompbelss2A.dropna()
-		kompbelss2A['ID']=kompbelss2A['kdskomp']+'.'+kompbelss2A['ID']
+		kompbelss2A['ID']=kompbelss2A['kdskomp'].astype(str)+'.'+kompbelss2A['ID']
 		kompbelss2B = kompbelss2A[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss2C = pd.concat([kompbelss2B,kdkomp], axis=1, sort=False).sort_index()
 		kompbelss2C.loc[:,'kdkomp'] = kompbelss2C.loc[:,'kdkomp'].ffill()
 		kompbelss2C=kompbelss2C.dropna()
-		kompbelss2C['ID']=kompbelss2C['kdkomp']+'.'+kompbelss2C['ID']
+		kompbelss2C['ID']=kompbelss2C['kdkomp'].astype(str)+'.'+kompbelss2C['ID']
 		kompbelss2D = kompbelss2C[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss3 = pd.concat([kompbelss2D,kdro], axis=1, sort=False).sort_index()
 		kompbelss3.loc[:,'kdro'] = kompbelss3.loc[:,'kdro'].ffill()
 		kompbelss3=kompbelss3.dropna()
-		kompbelss3['ID']=kompbelss3['kdro']+'.'+kompbelss3['ID']
+		kompbelss3['ID']=kompbelss3['kdro'].astype(str)+'.'+kompbelss3['ID']
 		kompbelss4 = kompbelss3[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss5 = pd.concat([kompbelss4,kdkro], axis=1, sort=False).sort_index()
 		kompbelss5.loc[:,'kdkro'] = kompbelss5.loc[:,'kdkro'].ffill()
 		kompbelss5=kompbelss5.dropna()
-		kompbelss5['ID']=kompbelss5['kdkro']+'.'+kompbelss5['ID']
+		kompbelss5['ID']=kompbelss5['kdkro'].astype(str)+'.'+kompbelss5['ID']
 		kompbelss6 = kompbelss5[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss7 = pd.concat([kompbelss6,kdgiat], axis=1, sort=False).sort_index()
 		kompbelss7.loc[:,'kdgiat'] = kompbelss7.loc[:,'kdgiat'].ffill()
 		kompbelss7=kompbelss7.dropna()
-		kompbelss7['ID']=kompbelss7['kdgiat']+'.'+kompbelss7['ID']
+		kompbelss7['ID']=kompbelss7['kdgiat'].astype(str)+'.'+kompbelss7['ID']
 		kompbelss8 = kompbelss7[['ID', 'Uraian', 'Belanja']]
 
 		kompbelss9 = pd.concat([kompbelss8,kdprog], axis=1, sort=False).sort_index()
 		kompbelss9.loc[:,'kdprog'] = kompbelss9.loc[:,'kdprog'].ffill()
 		kompbelss9=kompbelss9.dropna()
-		kompbelss9['ID']=kompbelss9['kdprog']+'.'+kompbelss9['ID']
+		kompbelss9['ID']=kompbelss9['kdprog'].astype(str)+'.'+kompbelss9['ID']
 		kompbelss10 = kompbelss9[['ID', 'Uraian', 'Belanja']]
 
 		# Gabung Jan-Des dengan Pagu
@@ -1370,7 +1371,7 @@ with tab2:
 		satker['Indeks'] = satker['Indeks']+19 
 		satker['Indeks'] = satker['Indeks'].astype(str)
 
-		satker['Sisa RPD'].loc[~satker['Pagu'].isnull()] = '=G'+satker['Indeks']+'-SUM(I'+satker['Indeks']+':T'+satker['Indeks']+')'
+		satker['Sisa RPD'].loc[~satker['Pagu'].isnull()] = '=G'+satker['Indeks'].astype(str)+'-SUM(I'+satker['Indeks'].astype(str)+':T'+satker['Indeks'].astype(str)+')'
 
 		satker = satker.reindex(['ID','Satker','Kode','Uraian','Belanja','Keterangan','Pagu','Sisa RPD', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], axis='columns')
 
@@ -1388,7 +1389,7 @@ with tab2:
 		satker2['Indeks'] = satker2['Indeks']+19 
 		satker2['Indeks'] = satker2['Indeks'].astype(str)
 
-		satker2['Sisa RPD'].loc[~satker2['Pagu'].isnull()] = '=G'+satker2['Indeks']+'-SUM(I'+satker2['Indeks']+':T'+satker2['Indeks']+')'
+		satker2['Sisa RPD'].loc[~satker2['Pagu'].isnull()] = '=G'+satker2['Indeks'].astype(str)+'-SUM(I'+satker2['Indeks'].astype(str)+':T'+satker2['Indeks'].astype(str)+')'
 
 		satker2 = satker2.reindex(['ID','Satker','Kode','Uraian','Belanja','Keterangan','Pagu','Sisa RPD', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], axis='columns')
 
@@ -1406,7 +1407,7 @@ with tab2:
 		satker3['Indeks'] = satker3['Indeks']+19 
 		satker3['Indeks'] = satker3['Indeks'].astype(str)
 
-		satker3['Sisa RPD'].loc[~satker3['Pagu'].isnull()] = '=G'+satker3['Indeks']+'-SUM(I'+satker3['Indeks']+':T'+satker3['Indeks']+')'
+		satker3['Sisa RPD'].loc[~satker3['Pagu'].isnull()] = '=G'+satker3['Indeks'].astype(str)+'-SUM(I'+satker3['Indeks'].astype(str)+':T'+satker3['Indeks'].astype(str)+')'
 
 		satker3 = satker3.reindex(['ID','Satker','Kode','Uraian','Belanja','Keterangan','Pagu','Sisa RPD', 'Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], axis='columns')
 
@@ -1419,9 +1420,9 @@ with tab2:
 		real2 = real[["TANGGAL SP2D", "KODE COA",	"NILAI RUPIAH"]]
 		real2.rename(columns={'NILAI RUPIAH': 'nilai'}, inplace=True)
 		real2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = real2['KODE COA'].str.split('.', expand=True)
-		real2['ID'] = real2['program'].str[-2:]+"."+real2['kro'].str[:4]+"."+real2['kro'].str[-3:]+"."+real2['ro']+"."+real2['Komponen']+"."+real2['Akun'].str[:2]
+		real2['ID'] = real2['program'].str[-2:].astype(str)+"."+real2['kro'].str[:4].astype(str)+"."+real2['kro'].str[-3:].astype(str)+"."+real2['ro'].astype(str)+"."+real2['Komponen'].astype(str)+"."+real2['Akun'].str[:2]
 		real2['TANGGAL SP2D']=pd.to_datetime(real2['TANGGAL SP2D'])
-		real2['bulan'] = real2['TANGGAL SP2D'].dt.month_name().str[:3]
+		real2['bulan'] = real2['TANGGAL SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
 		real2['Jenis Belanja'] = real2['Akun'].str[:2]
 		real2 = real2[["ID", "bulan",	"nilai"]]
 		real2=pd.pivot_table(real2, values='nilai', index='ID', columns='bulan', aggfunc='sum', fill_value=0, dropna=True, sort=True)
@@ -1441,9 +1442,9 @@ with tab2:
 		realZ2 = real[["TANGGAL SP2D", "KODE COA",	"NILAI RUPIAH"]]
 		realZ2.rename(columns={'NILAI RUPIAH': 'nilai'}, inplace=True)
 		realZ2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = realZ2['KODE COA'].str.split('.', expand=True)
-		realZ2['ID'] = realZ2['program'].str[-2:]+"."+realZ2['kro'].str[:4]+"."+realZ2['kro'].str[-3:]+"."+realZ2['ro']+"."+realZ2['Komponen']+"."+realZ2['Sub Komponen']+"."+realZ2['Akun'].str[:2]
+		realZ2['ID'] = realZ2['program'].str[-2:].astype(str)+"."+realZ2['kro'].str[:4].astype(str)+"."+realZ2['kro'].str[-3:].astype(str)+"."+realZ2['ro'].astype(str)+"."+realZ2['Komponen'].astype(str)+"."+realZ2['Sub Komponen'].astype(str)+"."+realZ2['Akun'].str[:2]
 		realZ2['TANGGAL SP2D']=pd.to_datetime(realZ2['TANGGAL SP2D'])
-		realZ2['bulan'] = realZ2['TANGGAL SP2D'].dt.month_name().str[:3]
+		realZ2['bulan'] = realZ2['TANGGAL SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
 		realZ2['Jenis Belanja'] = realZ2['Akun'].str[:2]
 		realZ2 = realZ2[["ID", "bulan",	"nilai"]]
 		realZ2=pd.pivot_table(realZ2, values='nilai', index='ID', columns='bulan', aggfunc='sum', fill_value=0, dropna=True, sort=True)
@@ -1463,9 +1464,9 @@ with tab2:
 		realZZ2 = real[["TANGGAL SP2D", "KODE COA",	"NILAI RUPIAH"]]
 		realZZ2.rename(columns={'NILAI RUPIAH': 'nilai'}, inplace=True)
 		realZZ2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = realZZ2['KODE COA'].str.split('.', expand=True)
-		realZZ2['ID'] = realZZ2['program'].str[-2:]+"."+realZZ2['kro'].str[:4]+"."+realZZ2['kro'].str[-3:]+"."+realZZ2['ro']+"."+realZZ2['Komponen']+"."+realZZ2['Sub Komponen']+"."+realZZ2['Akun']+"."+realZZ2['Akun'].str[:2]
+		realZZ2['ID'] = realZZ2['program'].str[-2:].astype(str)+"."+realZZ2['kro'].str[:4].astype(str)+"."+realZZ2['kro'].str[-3:].astype(str)+"."+realZZ2['ro'].astype(str)+"."+realZZ2['Komponen'].astype(str)+"."+realZZ2['Sub Komponen'].astype(str)+"."+realZZ2['Akun'].astype(str)+"."+realZZ2['Akun'].str[:2]
 		realZZ2['TANGGAL SP2D']=pd.to_datetime(realZZ2['TANGGAL SP2D'])
-		realZZ2['bulan'] = realZZ2['TANGGAL SP2D'].dt.month_name().str[:3]
+		realZZ2['bulan'] = realZZ2['TANGGAL SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
 		realZZ2['Jenis Belanja'] = realZZ2['Akun'].str[:2]
 		realZZ2 = realZZ2[["ID", "bulan",	"nilai"]]
 		realZZ2=pd.pivot_table(realZZ2, values='nilai', index='ID', columns='bulan', aggfunc='sum', fill_value=0, dropna=True, sort=True)
@@ -1485,7 +1486,7 @@ with tab2:
 		writer = pd.ExcelWriter(buffer2, engine='xlsxwriter')
 
 		# Get the xlsxwriter workbook and worksheet objects.
-		workbook  = writer.book
+		workbook = cast(Workbook, writer.book)
 
 		# Format sel.
 		header_format = workbook.add_format({
@@ -2036,6 +2037,7 @@ with tab2:
 			file_name=excelname,
 			mime="application/vnd.ms-excel"
 		)
+
 
 st.markdown('---')
 st.caption('Created by Farhan Ariq R. - Bidang PPA I, Kanwil DJPb Bangka Belitung 2022')
