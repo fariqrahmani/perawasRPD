@@ -10,9 +10,10 @@ import gspread
 import pytz
 from xlsxwriter.workbook import Workbook
 from typing import cast
-
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter("ignore")
+
+st.write("STEP 0: App started")
 
 # Untuk Download
 buffer = io.BytesIO()
@@ -30,12 +31,15 @@ st.markdown('---')
 tab1, tab2 = st.tabs(["Revisi Pemutakhiran KPA","Revisi Halaman III DIPA"])
 
 with tab1:
+	st.write("STEP 1: Tab 1 loaded")
 	st.header("Unduh RPD DIPA Terakhir untuk membantu Revisi Pemutakhiran KPA")
 	# Upload File RPD DIPA Usulan
 	uploaded_file = st.file_uploader('Upload File RPD DIPA Usulan di sini.', type='xlsx')
 	uploaded_file2 = st.file_uploader('Upload File RPD DIPA Petikan Terakhir di sini.', type='xlsx')
 	
 	if uploaded_file is not None and uploaded_file2 is not None:
+		st.write("STEP 2: Files uploaded")
+
 		raw = pd.read_excel(uploaded_file2, index_col=None, header=6, skipfooter=5, engine='openpyxl')
 		info = pd.read_excel(uploaded_file2, index_col=None, nrows = 1, dtype=str, engine='openpyxl')
 		info.rename(columns = {'Unnamed: 4':'kdsatker', 'Unnamed: 6':'nmsatker'}, inplace = True)
