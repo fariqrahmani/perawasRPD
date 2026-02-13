@@ -13,8 +13,6 @@ from typing import cast
 from pandas.errors import SettingWithCopyWarning
 warnings.simplefilter("ignore")
 
-st.write("STEP 0: App started")
-
 # Untuk Download
 buffer = io.BytesIO()
 buffer2 = io.BytesIO()
@@ -31,15 +29,12 @@ st.markdown('---')
 tab1, tab2 = st.tabs(["Revisi Pemutakhiran KPA","Revisi Halaman III DIPA"])
 
 with tab1:
-	st.write("STEP 1: Tab 1 loaded")
 	st.header("Unduh RPD DIPA Terakhir untuk membantu Revisi Pemutakhiran KPA")
 	# Upload File RPD DIPA Usulan
 	uploaded_file = st.file_uploader('Upload File RPD DIPA Usulan di sini.', type='xlsx')
 	uploaded_file2 = st.file_uploader('Upload File RPD DIPA Petikan Terakhir di sini.', type='xlsx')
 	
 	if uploaded_file is not None and uploaded_file2 is not None:
-		st.write("STEP 2: Files uploaded")
-
 		raw = pd.read_excel(uploaded_file2, index_col=None, header=6, skipfooter=5, engine='openpyxl')
 		info = pd.read_excel(uploaded_file2, index_col=None, nrows = 1, dtype=str, engine='openpyxl')
 		info.rename(columns = {'Unnamed: 4':'kdsatker', 'Unnamed: 6':'nmsatker'}, inplace = True)
@@ -1073,7 +1068,7 @@ with tab2:
 	st.header("Unduh RPD Realisasi untuk membantu Revisi Halaman III DIPA")
 	# Upload File RPD DIPA Usulan dan Mon SAKTI
 	uploaded_fileZ = st.file_uploader('Upload File RPD DIPA Usulan di sini..', type='xlsx')
-	uploaded_fileZ2 = st.file_uploader('Upload File Realisasi MON SAKTI di sini.', type='xlsx')
+	uploaded_fileZ2 = st.file_uploader('Upload File Realisasi MyIntress di sini. Pastikan data SP2D yang terpisah sudah digabung satu tabel terlebih dahulu.', type='xlsx')
 	
 	if uploaded_fileZ and uploaded_fileZ2:
 		raw = pd.read_excel(uploaded_fileZ, index_col=None, header=6, skipfooter=5, engine='openpyxl')
@@ -1421,12 +1416,13 @@ with tab2:
 		real = pd.read_excel(uploaded_fileZ2, index_col=None, header=2, engine='openpyxl')
 		real.reset_index(drop=True, inplace=True)
 
-		real2 = real[["TANGGAL SP2D", "KODE COA",	"NILAI RUPIAH"]]
-		real2.rename(columns={'NILAI RUPIAH': 'nilai'}, inplace=True)
-		real2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = real2['KODE COA'].str.split('.', expand=True)
+		real2 = real[["Tgl. SP2D", "Kode COA 16 Segmen", "Nilai Pengeluaran (Rp)"]]
+		real2.rename(columns={'Nilai Pengeluaran (Rp)': 'nilai'}, inplace=True)
+		real2['nilai'] = pd.to_numeric(real2['nilai'].str.replace('.', '', regex=False), errors='coerce')
+		real2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = real2['Kode COA 16 Segmen'].str.split('.', expand=True)
 		real2['ID'] = real2['program'].str[-2:].astype(str)+"."+real2['kro'].str[:4].astype(str)+"."+real2['kro'].str[-3:].astype(str)+"."+real2['ro'].astype(str)+"."+real2['Komponen'].astype(str)+"."+real2['Akun'].str[:2]
-		real2['TANGGAL SP2D']=pd.to_datetime(real2['TANGGAL SP2D'])
-		real2['bulan'] = real2['TANGGAL SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
+		real2['Tgl. SP2D']=pd.to_datetime(real2['Tgl. SP2D'])
+		real2['bulan'] = real2['Tgl. SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
 		real2['Jenis Belanja'] = real2['Akun'].str[:2]
 		real2 = real2[["ID", "bulan",	"nilai"]]
 		real2=pd.pivot_table(real2, values='nilai', index='ID', columns='bulan', aggfunc='sum', fill_value=0, dropna=True, sort=True)
@@ -1443,12 +1439,13 @@ with tab2:
 
 		# Data Realisasi Subkomponen
 
-		realZ2 = real[["TANGGAL SP2D", "KODE COA",	"NILAI RUPIAH"]]
-		realZ2.rename(columns={'NILAI RUPIAH': 'nilai'}, inplace=True)
-		realZ2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = realZ2['KODE COA'].str.split('.', expand=True)
+		realZ2 = real[["Tgl. SP2D", "Kode COA 16 Segmen",	"Nilai Pengeluaran (Rp)"]]
+		realZ2.rename(columns={'Nilai Pengeluaran (Rp)': 'nilai'}, inplace=True)
+		realZ2['nilai'] = pd.to_numeric(realZ2['nilai'].str.replace('.', '', regex=False), errors='coerce')
+		realZ2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = realZ2['Kode COA 16 Segmen'].str.split('.', expand=True)
 		realZ2['ID'] = realZ2['program'].str[-2:].astype(str)+"."+realZ2['kro'].str[:4].astype(str)+"."+realZ2['kro'].str[-3:].astype(str)+"."+realZ2['ro'].astype(str)+"."+realZ2['Komponen'].astype(str)+"."+realZ2['Sub Komponen'].astype(str)+"."+realZ2['Akun'].str[:2]
-		realZ2['TANGGAL SP2D']=pd.to_datetime(realZ2['TANGGAL SP2D'])
-		realZ2['bulan'] = realZ2['TANGGAL SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
+		realZ2['Tgl. SP2D']=pd.to_datetime(realZ2['Tgl. SP2D'])
+		realZ2['bulan'] = realZ2['Tgl. SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
 		realZ2['Jenis Belanja'] = realZ2['Akun'].str[:2]
 		realZ2 = realZ2[["ID", "bulan",	"nilai"]]
 		realZ2=pd.pivot_table(realZ2, values='nilai', index='ID', columns='bulan', aggfunc='sum', fill_value=0, dropna=True, sort=True)
@@ -1465,12 +1462,13 @@ with tab2:
 
 		# Data Realisasi Akun
 
-		realZZ2 = real[["TANGGAL SP2D", "KODE COA",	"NILAI RUPIAH"]]
-		realZZ2.rename(columns={'NILAI RUPIAH': 'nilai'}, inplace=True)
-		realZZ2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = realZZ2['KODE COA'].str.split('.', expand=True)
+		realZZ2 = real[["Tgl. SP2D", "Kode COA 16 Segmen",	"Nilai Pengeluaran (Rp)"]]
+		realZZ2.rename(columns={'Nilai Pengeluaran (Rp)': 'nilai'}, inplace=True)
+		realZZ2['nilai'] = pd.to_numeric(realZZ2['nilai'].str.replace('.', '', regex=False), errors='coerce')
+		realZZ2[['satker', 'kppn', 'Akun','program','kro','sdana','bank','kewenangan','lokasi','budget','xxx','xxxx','ro','Komponen','Sub Komponen','xxxxx']] = realZZ2['Kode COA 16 Segmen'].str.split('.', expand=True)
 		realZZ2['ID'] = realZZ2['program'].str[-2:].astype(str)+"."+realZZ2['kro'].str[:4].astype(str)+"."+realZZ2['kro'].str[-3:].astype(str)+"."+realZZ2['ro'].astype(str)+"."+realZZ2['Komponen'].astype(str)+"."+realZZ2['Sub Komponen'].astype(str)+"."+realZZ2['Akun'].astype(str)+"."+realZZ2['Akun'].str[:2]
-		realZZ2['TANGGAL SP2D']=pd.to_datetime(realZZ2['TANGGAL SP2D'])
-		realZZ2['bulan'] = realZZ2['TANGGAL SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
+		realZZ2['Tgl. SP2D']=pd.to_datetime(realZZ2['Tgl. SP2D'])
+		realZZ2['bulan'] = realZZ2['Tgl. SP2D'].dt.month_name().str[:3] # type: ignore[attr-defined]
 		realZZ2['Jenis Belanja'] = realZZ2['Akun'].str[:2]
 		realZZ2 = realZZ2[["ID", "bulan",	"nilai"]]
 		realZZ2=pd.pivot_table(realZZ2, values='nilai', index='ID', columns='bulan', aggfunc='sum', fill_value=0, dropna=True, sort=True)
